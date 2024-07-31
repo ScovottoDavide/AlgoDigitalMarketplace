@@ -1,0 +1,7 @@
+#pragma version 10
+
+smart_contracts.algo_digital_marketplace.contract.AlgoDigitalMarketplace.clear_state_program:
+    // smart_contracts/algo_digital_marketplace/contract.py:4
+    // class AlgoDigitalMarketplace(ARC4Contract):
+    int 1
+    return

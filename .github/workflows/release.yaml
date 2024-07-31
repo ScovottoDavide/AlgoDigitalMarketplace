@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.vscode/**'
+      - '.idea/**'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  AlgoDigitalMarketplace-contracts-validate:
+    name: Run AlgoDigitalMarketplace-contracts release
+    secrets: inherit
+    uses: ./.github/workflows/AlgoDigitalMarketplace-contracts-ci.yaml
+
+  AlgoDigitalMarketplace-contracts-release:
+    name: Run AlgoDigitalMarketplace-contracts release
+    secrets: inherit
+    uses: ./.github/workflows/AlgoDigitalMarketplace-contracts-cd.yaml
+    needs: AlgoDigitalMarketplace-contracts-validate
+
+  AlgoDigitalMarketplace-frontend-validate:
+    name: Run AlgoDigitalMarketplace-frontend release
+    secrets: inherit
+    uses: ./.github/workflows/AlgoDigitalMarketplace-frontend-ci.yaml
+
+  AlgoDigitalMarketplace-frontend-release:
+    name: Run AlgoDigitalMarketplace-frontend release
+    secrets: inherit
+    uses: ./.github/workflows/AlgoDigitalMarketplace-frontend-cd.yaml
+    needs: AlgoDigitalMarketplace-frontend-validate

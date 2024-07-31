@@ -1,0 +1,456 @@
+#pragma version 10
+
+smart_contracts.algo_digital_marketplace.contract.AlgoDigitalMarketplace.approval_program:
+    // smart_contracts/algo_digital_marketplace/contract.py:4
+    // class AlgoDigitalMarketplace(ARC4Contract):
+    method "createApplication(asset,uint64)void"
+    method "setPrice(uint64)void"
+    method "optInToAsset(pay)void"
+    method "buy(pay,uint64)void"
+    method "deleteApplication()void"
+    txna ApplicationArgs 0
+    match main_createApplication_route@1 main_setPrice_route@2 main_optInToAsset_route@3 main_buy_route@4 main_deleteApplication_route@5
+    err // reject transaction
+
+main_createApplication_route@1:
+    // smart_contracts/algo_digital_marketplace/contract.py:8-9
+    // # create the application
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    !
+    assert // is creating
+    // smart_contracts/algo_digital_marketplace/contract.py:4
+    // class AlgoDigitalMarketplace(ARC4Contract):
+    txna ApplicationArgs 1
+    btoi
+    txnas Assets
+    txna ApplicationArgs 2
+    btoi
+    // smart_contracts/algo_digital_marketplace/contract.py:8-9
+    // # create the application
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    callsub createApplication
+    int 1
+    return
+
+main_setPrice_route@2:
+    // smart_contracts/algo_digital_marketplace/contract.py:14-16
+    // # update the listing price: externally called
+    // # Make sure this can be called only by the owner
+    // @arc4.abimethod
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    // smart_contracts/algo_digital_marketplace/contract.py:4
+    // class AlgoDigitalMarketplace(ARC4Contract):
+    txna ApplicationArgs 1
+    btoi
+    // smart_contracts/algo_digital_marketplace/contract.py:14-16
+    // # update the listing price: externally called
+    // # Make sure this can be called only by the owner
+    // @arc4.abimethod
+    callsub setPrice
+    int 1
+    return
+
+main_optInToAsset_route@3:
+    // smart_contracts/algo_digital_marketplace/contract.py:21-24
+    // # opt in to the asset that will be sold
+    // # externally available method
+    // # opt-in -> asset transfer to no one (?)
+    // @arc4.abimethod
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    // smart_contracts/algo_digital_marketplace/contract.py:4
+    // class AlgoDigitalMarketplace(ARC4Contract):
+    txn GroupIndex
+    int 1
+    -
+    dup
+    gtxns TypeEnum
+    int pay
+    ==
+    assert // transaction type is pay
+    // smart_contracts/algo_digital_marketplace/contract.py:21-24
+    // # opt in to the asset that will be sold
+    // # externally available method
+    // # opt-in -> asset transfer to no one (?)
+    // @arc4.abimethod
+    callsub optInToAsset
+    int 1
+    return
+
+main_buy_route@4:
+    // smart_contracts/algo_digital_marketplace/contract.py:37-38
+    // # buy the asset
+    // @arc4.abimethod
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    // smart_contracts/algo_digital_marketplace/contract.py:4
+    // class AlgoDigitalMarketplace(ARC4Contract):
+    txn GroupIndex
+    int 1
+    -
+    dup
+    gtxns TypeEnum
+    int pay
+    ==
+    assert // transaction type is pay
+    txna ApplicationArgs 1
+    btoi
+    // smart_contracts/algo_digital_marketplace/contract.py:37-38
+    // # buy the asset
+    // @arc4.abimethod
+    callsub buy
+    int 1
+    return
+
+main_deleteApplication_route@5:
+    // smart_contracts/algo_digital_marketplace/contract.py:51-53
+    // # delete the application
+    // # the creator could call this to delete the SC
+    // @arc4.abimethod(allow_actions=['DeleteApplication'])
+    txn OnCompletion
+    int DeleteApplication
+    ==
+    assert // OnCompletion is DeleteApplication
+    txn ApplicationID
+    assert // is not creating
+    callsub deleteApplication
+    int 1
+    return
+
+
+// smart_contracts.algo_digital_marketplace.contract.AlgoDigitalMarketplace.createApplication(assetId: uint64, unitaryPrice: uint64) -> void:
+createApplication:
+    // smart_contracts/algo_digital_marketplace/contract.py:8-10
+    // # create the application
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    // def createApplication(self, assetId: Asset, unitaryPrice: UInt64) -> None:
+    proto 2 0
+    // smart_contracts/algo_digital_marketplace/contract.py:5
+    // assetId: UInt64
+    byte "assetId"
+    // smart_contracts/algo_digital_marketplace/contract.py:11
+    // self.assetId = assetId.id
+    frame_dig -2
+    app_global_put
+    // smart_contracts/algo_digital_marketplace/contract.py:6
+    // unitaryPrice: UInt64
+    byte "unitaryPrice"
+    // smart_contracts/algo_digital_marketplace/contract.py:12
+    // self.unitaryPrice = unitaryPrice
+    frame_dig -1
+    app_global_put
+    retsub
+
+
+// smart_contracts.algo_digital_marketplace.contract.AlgoDigitalMarketplace.setPrice(unitaryPrice: uint64) -> void:
+setPrice:
+    // smart_contracts/algo_digital_marketplace/contract.py:14-17
+    // # update the listing price: externally called
+    // # Make sure this can be called only by the owner
+    // @arc4.abimethod
+    // def setPrice(self, unitaryPrice: UInt64) -> None:
+    proto 1 0
+    // smart_contracts/algo_digital_marketplace/contract.py:18
+    // assert Txn.sender == Global.creator_address
+    txn Sender
+    global CreatorAddress
+    ==
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:6
+    // unitaryPrice: UInt64
+    byte "unitaryPrice"
+    // smart_contracts/algo_digital_marketplace/contract.py:19
+    // self.unitaryPrice = unitaryPrice
+    frame_dig -1
+    app_global_put
+    retsub
+
+
+// smart_contracts.algo_digital_marketplace.contract.AlgoDigitalMarketplace.optInToAsset(mbrPay: uint64) -> void:
+optInToAsset:
+    // smart_contracts/algo_digital_marketplace/contract.py:21-25
+    // # opt in to the asset that will be sold
+    // # externally available method
+    // # opt-in -> asset transfer to no one (?)
+    // @arc4.abimethod
+    // def optInToAsset(self, mbrPay: gtxn.PaymentTransaction) -> None:
+    proto 1 0
+    // smart_contracts/algo_digital_marketplace/contract.py:26
+    // assert Txn.sender == Global.creator_address
+    txn Sender
+    global CreatorAddress
+    ==
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:27
+    // assert not Global.current_application_address.is_opted_in(Asset(self.assetId))
+    global CurrentApplicationAddress
+    int 0
+    // smart_contracts/algo_digital_marketplace/contract.py:5
+    // assetId: UInt64
+    byte "assetId"
+    // smart_contracts/algo_digital_marketplace/contract.py:27
+    // assert not Global.current_application_address.is_opted_in(Asset(self.assetId))
+    app_global_get_ex
+    assert // check self.assetId exists
+    asset_holding_get AssetBalance
+    bury 1
+    !
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:28
+    // assert mbrPay.receiver == Global.current_application_address
+    frame_dig -1
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:29
+    // assert mbrPay.amount == Global.min_balance + Global.asset_opt_in_min_balance
+    frame_dig -1
+    gtxns Amount
+    global MinBalance
+    global AssetOptInMinBalance
+    +
+    ==
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:31-35
+    // itxn.AssetTransfer(
+    //     xfer_asset=self.assetId,
+    //     asset_receiver=Global.current_application_address,
+    //     asset_amount=0
+    // ).submit()
+    itxn_begin
+    // smart_contracts/algo_digital_marketplace/contract.py:32
+    // xfer_asset=self.assetId,
+    int 0
+    // smart_contracts/algo_digital_marketplace/contract.py:5
+    // assetId: UInt64
+    byte "assetId"
+    // smart_contracts/algo_digital_marketplace/contract.py:32
+    // xfer_asset=self.assetId,
+    app_global_get_ex
+    assert // check self.assetId exists
+    // smart_contracts/algo_digital_marketplace/contract.py:33
+    // asset_receiver=Global.current_application_address,
+    global CurrentApplicationAddress
+    // smart_contracts/algo_digital_marketplace/contract.py:34
+    // asset_amount=0
+    int 0
+    itxn_field AssetAmount
+    itxn_field AssetReceiver
+    itxn_field XferAsset
+    // smart_contracts/algo_digital_marketplace/contract.py:31
+    // itxn.AssetTransfer(
+    int axfer
+    itxn_field TypeEnum
+    int 0
+    itxn_field Fee
+    // smart_contracts/algo_digital_marketplace/contract.py:31-35
+    // itxn.AssetTransfer(
+    //     xfer_asset=self.assetId,
+    //     asset_receiver=Global.current_application_address,
+    //     asset_amount=0
+    // ).submit()
+    itxn_submit
+    retsub
+
+
+// smart_contracts.algo_digital_marketplace.contract.AlgoDigitalMarketplace.buy(buyerTxn: uint64, quantity: uint64) -> void:
+buy:
+    // smart_contracts/algo_digital_marketplace/contract.py:37-39
+    // # buy the asset
+    // @arc4.abimethod
+    // def buy(self, buyerTxn: gtxn.PaymentTransaction, quantity: UInt64) -> None:
+    proto 2 0
+    // smart_contracts/algo_digital_marketplace/contract.py:40
+    // assert self.unitaryPrice != UInt64(0)
+    int 0
+    // smart_contracts/algo_digital_marketplace/contract.py:6
+    // unitaryPrice: UInt64
+    byte "unitaryPrice"
+    // smart_contracts/algo_digital_marketplace/contract.py:40
+    // assert self.unitaryPrice != UInt64(0)
+    app_global_get_ex
+    assert // check self.unitaryPrice exists
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:41
+    // assert Txn.sender == buyerTxn.sender
+    txn Sender
+    frame_dig -2
+    gtxns Sender
+    ==
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:42
+    // assert buyerTxn.receiver == Global.current_application_address
+    frame_dig -2
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:43
+    // assert buyerTxn.amount == self.unitaryPrice * quantity
+    frame_dig -2
+    gtxns Amount
+    int 0
+    // smart_contracts/algo_digital_marketplace/contract.py:6
+    // unitaryPrice: UInt64
+    byte "unitaryPrice"
+    // smart_contracts/algo_digital_marketplace/contract.py:43
+    // assert buyerTxn.amount == self.unitaryPrice * quantity
+    app_global_get_ex
+    assert // check self.unitaryPrice exists
+    frame_dig -1
+    *
+    ==
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:45-49
+    // itxn.AssetTransfer(
+    //     xfer_asset=self.assetId,
+    //     asset_receiver=Txn.sender,
+    //     asset_amount=quantity,
+    // ).submit()
+    itxn_begin
+    // smart_contracts/algo_digital_marketplace/contract.py:46
+    // xfer_asset=self.assetId,
+    int 0
+    // smart_contracts/algo_digital_marketplace/contract.py:5
+    // assetId: UInt64
+    byte "assetId"
+    // smart_contracts/algo_digital_marketplace/contract.py:46
+    // xfer_asset=self.assetId,
+    app_global_get_ex
+    assert // check self.assetId exists
+    // smart_contracts/algo_digital_marketplace/contract.py:47
+    // asset_receiver=Txn.sender,
+    txn Sender
+    frame_dig -1
+    itxn_field AssetAmount
+    itxn_field AssetReceiver
+    itxn_field XferAsset
+    // smart_contracts/algo_digital_marketplace/contract.py:45
+    // itxn.AssetTransfer(
+    int axfer
+    itxn_field TypeEnum
+    int 0
+    itxn_field Fee
+    // smart_contracts/algo_digital_marketplace/contract.py:45-49
+    // itxn.AssetTransfer(
+    //     xfer_asset=self.assetId,
+    //     asset_receiver=Txn.sender,
+    //     asset_amount=quantity,
+    // ).submit()
+    itxn_submit
+    retsub
+
+
+// smart_contracts.algo_digital_marketplace.contract.AlgoDigitalMarketplace.deleteApplication() -> void:
+deleteApplication:
+    // smart_contracts/algo_digital_marketplace/contract.py:51-54
+    // # delete the application
+    // # the creator could call this to delete the SC
+    // @arc4.abimethod(allow_actions=['DeleteApplication'])
+    // def deleteApplication(self) -> None:
+    proto 0 0
+    // smart_contracts/algo_digital_marketplace/contract.py:55
+    // assert Txn.sender == Global.creator_address
+    txn Sender
+    global CreatorAddress
+    ==
+    assert
+    // smart_contracts/algo_digital_marketplace/contract.py:57-63
+    // # withdraw remaining assets
+    // itxn.AssetTransfer(
+    //     xfer_asset=self.assetId,
+    //     asset_receiver=Global.creator_address,
+    //     asset_amount=0,
+    //     asset_close_to=Global.creator_address, # send remaining assets to creator
+    // ).submit()
+    itxn_begin
+    // smart_contracts/algo_digital_marketplace/contract.py:59
+    // xfer_asset=self.assetId,
+    int 0
+    // smart_contracts/algo_digital_marketplace/contract.py:5
+    // assetId: UInt64
+    byte "assetId"
+    // smart_contracts/algo_digital_marketplace/contract.py:59
+    // xfer_asset=self.assetId,
+    app_global_get_ex
+    assert // check self.assetId exists
+    // smart_contracts/algo_digital_marketplace/contract.py:60
+    // asset_receiver=Global.creator_address,
+    global CreatorAddress
+    // smart_contracts/algo_digital_marketplace/contract.py:62
+    // asset_close_to=Global.creator_address, # send remaining assets to creator
+    dup
+    itxn_field AssetCloseTo
+    // smart_contracts/algo_digital_marketplace/contract.py:61
+    // asset_amount=0,
+    int 0
+    itxn_field AssetAmount
+    itxn_field AssetReceiver
+    itxn_field XferAsset
+    // smart_contracts/algo_digital_marketplace/contract.py:57-58
+    // # withdraw remaining assets
+    // itxn.AssetTransfer(
+    int axfer
+    itxn_field TypeEnum
+    int 0
+    itxn_field Fee
+    // smart_contracts/algo_digital_marketplace/contract.py:57-63
+    // # withdraw remaining assets
+    // itxn.AssetTransfer(
+    //     xfer_asset=self.assetId,
+    //     asset_receiver=Global.creator_address,
+    //     asset_amount=0,
+    //     asset_close_to=Global.creator_address, # send remaining assets to creator
+    // ).submit()
+    itxn_submit
+    // smart_contracts/algo_digital_marketplace/contract.py:65-70
+    // # withdraw remaining profits (algos)
+    // itxn.Payment(
+    //     receiver=Global.creator_address,
+    //     amount=0,
+    //     close_remainder_to=Global.creator_address, # send all the algos that are in the SC
+    // ).submit()
+    itxn_begin
+    // smart_contracts/algo_digital_marketplace/contract.py:67
+    // receiver=Global.creator_address,
+    global CreatorAddress
+    // smart_contracts/algo_digital_marketplace/contract.py:69
+    // close_remainder_to=Global.creator_address, # send all the algos that are in the SC
+    dup
+    itxn_field CloseRemainderTo
+    // smart_contracts/algo_digital_marketplace/contract.py:68
+    // amount=0,
+    int 0
+    itxn_field Amount
+    itxn_field Receiver
+    // smart_contracts/algo_digital_marketplace/contract.py:65-66
+    // # withdraw remaining profits (algos)
+    // itxn.Payment(
+    int pay
+    itxn_field TypeEnum
+    int 0
+    itxn_field Fee
+    // smart_contracts/algo_digital_marketplace/contract.py:65-70
+    // # withdraw remaining profits (algos)
+    // itxn.Payment(
+    //     receiver=Global.creator_address,
+    //     amount=0,
+    //     close_remainder_to=Global.creator_address, # send all the algos that are in the SC
+    // ).submit()
+    itxn_submit
+    retsub

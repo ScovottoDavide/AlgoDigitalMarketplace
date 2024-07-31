@@ -1,0 +1,14 @@
+name: Pull Request validation
+
+on: [pull_request]
+
+
+jobs:
+  AlgoDigitalMarketplace-contracts-ci:
+    name: Run AlgoDigitalMarketplace-contracts validation
+    uses: ./.github/workflows/AlgoDigitalMarketplace-contracts-ci.yaml
+
+  AlgoDigitalMarketplace-frontend-ci:
+    name: Run AlgoDigitalMarketplace-frontend validation
+    uses: ./.github/workflows/AlgoDigitalMarketplace-frontend-ci.yaml
+
